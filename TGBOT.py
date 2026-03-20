@@ -5,6 +5,8 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 import os
+import threading
+from flask import Flask
 
 TOKEN = os.getenv("TOKEN")
 API_KEY = os.getenv("API_KEY")
@@ -76,5 +78,15 @@ async def weather_by_hour(message: types.Message):
 
 
 # 🔹 ЗАПУСК
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot is running!"
+
+def run_web():
+    app.run(host="0.0.0.0", port=10000)
+
 if __name__ == "__main__":
-    executor.start_polling(dp)
+    threading.Thread(target=run_web).start()
+    executor.start_polling(dp, skip_updates=True)
