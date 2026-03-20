@@ -4,8 +4,12 @@ from datetime import datetime
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-TOKEN = "8669565510:AAGTiinEDUerA8kUF2I9cVPXl8qEJ0e_FYw"
-API_KEY = "778dce10acdc408b31b87ede8f8e60c1"
+import os
+
+TOKEN = os.getenv("TOKEN")
+API_KEY = os.getenv("API_KEY")
+if not TOKEN or not API_KEY:
+    raise ValueError("TOKEN або API_KEY не задані!")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
