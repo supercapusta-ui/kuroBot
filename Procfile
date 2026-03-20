@@ -1,1 +1,0 @@
-worker: python TGBOT.py
