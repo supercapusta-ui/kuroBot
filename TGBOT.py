@@ -10,6 +10,7 @@ from flask import Flask
 
 TOKEN = os.getenv("TOKEN")
 API_KEY = os.getenv("API_KEY")
+
 if not TOKEN or not API_KEY:
     raise ValueError("TOKEN або API_KEY не задані!")
 
@@ -40,13 +41,11 @@ async def ask_time(message: types.Message):
 @dp.message_handler(lambda message: message.text.isdigit())
 async def weather_by_hour(message: types.Message):
     city = "Ternopil"
-
     hour = int(message.text)
 
     url = f"http://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}&units=metric&lang=ua"
     response = requests.get(url).json()
 
-    # 🔥 знаходимо найближчий час (кратний 3)
     closest_hour = round(hour / 3) * 3
     if closest_hour == 24:
         closest_hour = 0
@@ -66,27 +65,42 @@ async def weather_by_hour(message: types.Message):
         await message.answer("❌ Не знайдено прогноз")
         return
 
-    now = datetime.now().strftime("%H:%M")
-
     await message.answer(
         f"🕒 Запит: {hour}:00\n"
         f"📊 Найближчий прогноз: {target[:5]}\n"
-        # f"🕓 Зараз: {now}\n"
-        f"🌡 Температура в {target[:5]}: {temp}°C\n"
+        f"🌡 Температура: {temp}°C\n"
         f"☁️ Погода: {desc}"
     )
 
 
-# 🔹 ЗАПУСК
+# 🔹 WEB SERVER (щоб Render не падав)
 app = Flask(__name__)
 
 @app.route("/")
 def home():
     return "Bot is running!"
 
+
 def run_web():
     app.run(host="0.0.0.0", port=10000)
 
+
+# 🔥 ГОЛОВНИЙ ФІКС (ВАЖЛИВО!)
+async def on_startup(dp):
+    await bot.delete_webhook(drop_pending_updates=True)
+    print("✅ Bot started and webhook cleared")
+
+
+# 🔹 ЗАПУСК
 if __name__ == "__main__":
-    threading.Thread(target=run_web).start()
-    executor.start_polling(dp, skip_updates=True)
+    t = threading.Thread(target=run_web)
+    t.daemon = True
+    t.start()
+
+    print("🚀 Starting bot...")
+
+    executor.start_polling(
+        dp,
+        skip_updates=True,
+        on_startup=on_startup
+    )
